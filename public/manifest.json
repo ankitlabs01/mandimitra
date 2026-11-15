@@ -1,0 +1,16 @@
+{
+  "name": "MANDI MITRA AI - Smart Decisions. Better Farming.",
+  "short_name": "Mandi Mitra",
+  "description": "Smart Decisions. Better Farming. Agricultural Market Intelligence & Advisory Platform for Indian Farmers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1b4332",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
