@@ -26,13 +26,13 @@ export const AdminDashboardModule: React.FC = () => {
   const [arrivalTons, setArrivalTons] = useState(1400);
   const [recordAdded, setRecordAdded] = useState(false);
 
-  const handleAddPrice = (e: React.FormEvent) => {
+  const handleAddPrice = async (e: React.FormEvent) => {
     e.preventDefault();
     const crop = crops.find((c) => c.id === selectedCropId);
     const mandi = mandis.find((m) => m.id === selectedMandiId);
     if (!crop || !mandi) return;
 
-    addMandiPriceRecord({
+    await addMandiPriceRecord({
       mandiId: mandi.id,
       mandiName: mandi.name,
       cropId: crop.id,

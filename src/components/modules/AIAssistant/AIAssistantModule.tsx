@@ -42,6 +42,26 @@ export const AIAssistantModule: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Update initial greeting when language updates post-mount
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'm-1') {
+        return [
+          {
+            id: 'm-1',
+            sender: 'assistant',
+            text:
+              language === 'hi'
+                ? 'नमस्ते किसान मित्र! मैं मंडी मित्र एआई हूँ। आप मुझसे मंडी भाव, भाव पूर्वानुमान, अभी बेचें या रुकें, परिवहन किराया अथवा फसल भंडारण के बारे में कुछ भी पूछ सकते हैं।'
+                : 'Hello Farmer Friend! I am Mandi Mitra AI. Ask me anything regarding live mandi prices, 15-day price forecasts, sell vs wait calculations, transport costs, or grain storage.',
+            timestamp: 'Just now',
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [language]);
+
   const quickPrompts = [
     language === 'hi'
       ? 'आज इंदौर और उज्जैन मंडी में सोयाबीन का क्या भाव है?'
@@ -117,6 +137,20 @@ export const AIAssistantModule: React.FC = () => {
         <p className="text-xs sm:text-sm text-gray-500">
           Ask questions in any of 12 Indian languages about market trends, transport rates, and storage economics.
         </p>
+
+        {/* NVIDIA Architecture & Engine Status */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 font-semibold text-[11px]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            NVIDIA NIM Architecture Ready
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px] font-medium border border-gray-200">
+            Active: Deterministic Agro-Advisory Engine (Keyless Fallback)
+          </span>
+          <span className="text-[11px] text-gray-400">
+            Grounded in Central India APMC prices
+          </span>
+        </div>
       </div>
 
       {/* Chat Container */}

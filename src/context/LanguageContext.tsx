@@ -11,31 +11,47 @@ interface LanguageContextType {
   t: (key: string) => string;
   languages: LanguageMeta[];
   currentLanguageMeta: LanguageMeta;
+  isMounted: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<SupportedLanguage>(() => {
-    return getStorageItem<SupportedLanguage>('language', 'hi');
-  });
+export const DEFAULT_LANGUAGE: SupportedLanguage = 'hi';
 
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // 1. Consistent static default language for identical server and client initial render
+  const [language, setLanguageState] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  // 2. Load user's saved language preference ONLY after component mounting
   useEffect(() => {
-    setStorageItem('language', language);
-  }, [language]);
+    setIsMounted(true);
+    try {
+      const saved = getStorageItem<SupportedLanguage>('language', DEFAULT_LANGUAGE);
+      const isValid = SUPPORTED_LANGUAGES.some((l) => l.code === saved);
+      if (isValid && saved !== DEFAULT_LANGUAGE) {
+        setLanguageState(saved);
+      }
+    } catch (err) {
+      console.warn('Error restoring saved language preference:', err);
+    }
+  }, []);
 
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
+    setStorageItem('language', lang);
   };
 
   const t = (key: string): string => {
     const langDict = translations[language] || translations.en;
-    if (langDict[key]) return langDict[key];
-    return translations.en[key] || key;
+    if (langDict && langDict[key]) return langDict[key];
+    return (translations.en && translations.en[key]) || key;
   };
 
   const currentLanguageMeta =
-    SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[1];
+    SUPPORTED_LANGUAGES.find((l) => l.code === language) ||
+    SUPPORTED_LANGUAGES.find((l) => l.code === DEFAULT_LANGUAGE) ||
+    SUPPORTED_LANGUAGES[0];
 
   return (
     <LanguageContext.Provider
@@ -45,6 +61,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         t,
         languages: SUPPORTED_LANGUAGES,
         currentLanguageMeta,
+        isMounted,
       }}
     >
       {children}

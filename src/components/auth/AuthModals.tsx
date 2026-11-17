@@ -3,9 +3,23 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, RegisterInput } from '@/context/AuthContext';
 import { UserRole } from '@/lib/types';
-import { User, Shield, CheckCircle2, Building, Wheat, Briefcase } from 'lucide-react';
+import { isSupabaseConfigured, getSupabaseConfig, setRuntimeSupabaseConfig } from '@/lib/supabase';
+import {
+  User,
+  Shield,
+  CheckCircle2,
+  Building,
+  Wheat,
+  Briefcase,
+  Lock,
+  Mail,
+  Phone,
+  Database,
+  AlertCircle,
+  Key,
+} from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,20 +27,80 @@ interface AuthModalProps {
 }
 
 export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { user, login, logout, switchRole, role } = useAuth();
-  const [tab, setTab] = useState<'profile' | 'switch' | 'login'>('profile');
-  const [phone, setPhone] = useState(user?.phone || '9826144520');
+  const {
+    user,
+    login,
+    register,
+    logout,
+    switchRole,
+    role,
+    isAuthLoading,
+    authError,
+    clearAuthError,
+  } = useAuth();
+
+  const [tab, setTab] = useState<'profile' | 'switch' | 'login' | 'register' | 'supabase'>('profile');
+
+  // Login Form State
+  const [loginEmailOrPhone, setLoginEmailOrPhone] = useState(user?.email || 'farmer.ramesh@mandimitra.ai');
+  const [loginPassword, setLoginPassword] = useState('MandiMitra@2026');
   const [selectedRole, setSelectedRole] = useState<UserRole>(role);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Register Form State
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regRole, setRegRole] = useState<UserRole>('farmer');
+  const [regVillage, setRegVillage] = useState('Datoda');
+  const [regDistrict, setRegDistrict] = useState('Indore');
+  const [regState, setRegState] = useState('Madhya Pradesh');
+  const [regLandAcres, setRegLandAcres] = useState<number>(10);
+  const [regBusinessName, setRegBusinessName] = useState('');
+
+  // Runtime Supabase Config State
+  const config = getSupabaseConfig();
+  const [customUrl, setCustomUrl] = useState(config.url || '');
+  const [customKey, setCustomKey] = useState('');
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(phone, selectedRole);
-    onClose();
+    clearAuthError();
+    const result = await login(loginEmailOrPhone, selectedRole, loginPassword);
+    if (result.success) {
+      onClose();
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearAuthError();
+    const input: RegisterInput = {
+      name: regName.trim(),
+      email: regEmail.trim(),
+      password: regPassword,
+      phone: regPhone.trim(),
+      role: regRole,
+      village: regVillage.trim(),
+      district: regDistrict.trim(),
+      state: regState.trim(),
+      landSizeAcres: regRole === 'farmer' ? regLandAcres : undefined,
+      businessName: regBusinessName.trim() || undefined,
+    };
+    const result = await register(input);
+    if (result.success) {
+      onClose();
+    }
   };
 
   const handleRoleQuickSwitch = (newRole: UserRole) => {
     switchRole(newRole);
     onClose();
+  };
+
+  const handleSaveSupabaseConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRuntimeSupabaseConfig(customUrl, customKey);
   };
 
   return (
@@ -42,33 +116,63 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       size="md"
     >
       {/* Tab Switcher */}
-      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl mb-6 text-xs font-semibold">
+      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl mb-5 text-xs font-semibold overflow-x-auto">
         <button
-          onClick={() => setTab('profile')}
-          className={`flex-1 py-1.5 rounded-lg transition-all ${
+          onClick={() => { clearAuthError(); setTab('profile'); }}
+          className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg transition-all text-center ${
             tab === 'profile' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Active Profile
         </button>
         <button
-          onClick={() => setTab('switch')}
-          className={`flex-1 py-1.5 rounded-lg transition-all ${
+          onClick={() => { clearAuthError(); setTab('switch'); }}
+          className={`flex-1 min-w-[80px] py-1.5 px-2 rounded-lg transition-all text-center ${
             tab === 'switch' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Switch Persona
         </button>
         <button
-          onClick={() => setTab('login')}
-          className={`flex-1 py-1.5 rounded-lg transition-all ${
+          onClick={() => { clearAuthError(); setTab('login'); }}
+          className={`flex-1 min-w-[60px] py-1.5 px-2 rounded-lg transition-all text-center ${
             tab === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          Login / Register
+          Login
+        </button>
+        <button
+          onClick={() => { clearAuthError(); setTab('register'); }}
+          className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg transition-all text-center ${
+            tab === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          Register
+        </button>
+        <button
+          onClick={() => { clearAuthError(); setTab('supabase'); }}
+          className={`flex-1 min-w-[75px] py-1.5 px-2 rounded-lg transition-all text-center flex items-center justify-center gap-1 ${
+            tab === 'supabase' ? 'bg-white shadow text-emerald-900 font-bold' : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <Database className="w-3 h-3 text-emerald-700" />
+          <span>Database</span>
         </button>
       </div>
 
+      {/* Auth Error Banner */}
+      {authError && (
+        <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2 animate-fade-in">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-bold">Authentication Notice:</span> {authError}
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------
+          TAB 1: ACTIVE PROFILE
+      ---------------------------------------------------------------------- */}
       {tab === 'profile' && user && (
         <div className="space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100">
@@ -117,6 +221,16 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             )}
           </div>
 
+          <div className="p-3 bg-emerald-50/40 rounded-xl border border-emerald-100 text-[11px] text-emerald-900 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Database className="w-3.5 h-3.5 text-emerald-700" />
+              Supabase Status:
+            </span>
+            <span className="font-bold">
+              {isSupabaseConfigured ? '✓ Connected to Cloud DB' : 'Offline / Local Persistence'}
+            </span>
+          </div>
+
           <div className="pt-4 flex items-center justify-between border-t border-gray-100">
             <Button variant="outline" size="sm" onClick={() => setTab('switch')}>
               Switch Role
@@ -124,10 +238,11 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 onClose();
               }}
+              isLoading={isAuthLoading}
             >
               Sign Out
             </Button>
@@ -135,6 +250,9 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
       )}
 
+      {/* ---------------------------------------------------------------------
+          TAB 2: PERSONA SWITCHER
+      ---------------------------------------------------------------------- */}
       {tab === 'switch' && (
         <div className="space-y-3">
           <p className="text-xs text-gray-500 mb-2">
@@ -223,36 +341,53 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
       )}
 
+      {/* ---------------------------------------------------------------------
+          TAB 3: LOGIN (Supabase Auth Email + Password / Mobile Phone)
+      ---------------------------------------------------------------------- */}
       {tab === 'login' && (
-        <form onSubmit={handleLoginSubmit} className="space-y-4">
+        <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Mobile Number (10 Digits)
+            <label className="block font-semibold text-gray-700 mb-1">
+              Email or Mobile Number
             </label>
-            <div className="flex">
-              <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                +91
-              </span>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="tel"
+                type="text"
                 required
-                pattern="[0-9]{10}"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="9826144520"
-                className="flex-1 rounded-r-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                value={loginEmailOrPhone}
+                onChange={(e) => setLoginEmailOrPhone(e.target.value)}
+                placeholder="kisan@mandimitra.ai or 9826144520"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block font-semibold text-gray-700 mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">
               Select Desired Role
             </label>
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="farmer">Farmer (किसान)</option>
               <option value="buyer">Buyer / Trader / Processor</option>
@@ -261,13 +396,225 @@ export const AuthModals: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </select>
           </div>
 
-          <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100 text-xs text-emerald-800">
-            Instant Demo Auth: SMS OTP verification is simulated automatically.
+          <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 text-[11px] text-emerald-900">
+            {isSupabaseConfigured
+              ? '✓ Supabase Authentication active with session persistence.'
+              : '⚡ Local & Demo Auth Mode active.'}
           </div>
 
-          <Button type="submit" variant="primary" className="w-full">
-            Sign In with OTP
+          <Button type="submit" variant="primary" className="w-full" isLoading={isAuthLoading}>
+            Sign In with Supabase
           </Button>
+
+          <p className="text-center text-gray-500 text-[11px]">
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={() => setTab('register')}
+              className="text-emerald-700 font-bold hover:underline"
+            >
+              Create Account
+            </button>
+          </p>
+        </form>
+      )}
+
+      {/* ---------------------------------------------------------------------
+          TAB 4: REGISTER (Supabase Auth User + profiles table)
+      ---------------------------------------------------------------------- */}
+      {tab === 'register' && (
+        <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-xs max-h-[60vh] overflow-y-auto pr-1">
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">Full Legal Name</label>
+            <input
+              type="text"
+              required
+              value={regName}
+              onChange={(e) => setRegName(e.target.value)}
+              placeholder="e.g. Rameshwar Patidar"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Email Address</label>
+              <input
+                type="email"
+                required
+                value={regEmail}
+                onChange={(e) => setRegEmail(e.target.value)}
+                placeholder="kisan@example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Mobile Number</label>
+              <input
+                type="tel"
+                required
+                value={regPhone}
+                onChange={(e) => setRegPhone(e.target.value)}
+                placeholder="+91 98261 44520"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">Account Password (min. 6 chars)</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={regPassword}
+              onChange={(e) => setRegPassword(e.target.value)}
+              placeholder="Create secure password"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">Platform Role</label>
+            <select
+              value={regRole}
+              onChange={(e) => setRegRole(e.target.value as UserRole)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold"
+            >
+              <option value="farmer">Farmer (किसान)</option>
+              <option value="buyer">Buyer / Trader / Processor</option>
+              <option value="fpo">FPO Coordinator</option>
+              <option value="admin">Platform Administrator</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Village / Town</label>
+              <input
+                type="text"
+                value={regVillage}
+                onChange={(e) => setRegVillage(e.target.value)}
+                className="w-full px-2.5 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">District</label>
+              <input
+                type="text"
+                value={regDistrict}
+                onChange={(e) => setRegDistrict(e.target.value)}
+                className="w-full px-2.5 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">State</label>
+              <input
+                type="text"
+                value={regState}
+                onChange={(e) => setRegState(e.target.value)}
+                className="w-full px-2.5 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+          </div>
+
+          {regRole === 'farmer' && (
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Land Size (Acres)</label>
+              <input
+                type="number"
+                step="0.5"
+                value={regLandAcres}
+                onChange={(e) => setRegLandAcres(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+          )}
+
+          {(regRole === 'buyer' || regRole === 'fpo') && (
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Business / FPO Legal Name</label>
+              <input
+                type="text"
+                value={regBusinessName}
+                onChange={(e) => setRegBusinessName(e.target.value)}
+                placeholder="e.g. Malwa Agro Oils Ltd"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+              />
+            </div>
+          )}
+
+          <Button type="submit" variant="primary" className="w-full mt-2" isLoading={isAuthLoading}>
+            Register in Supabase Authentication
+          </Button>
+        </form>
+      )}
+
+      {/* ---------------------------------------------------------------------
+          TAB 5: SUPABASE DATABASE CONFIGURATION & STATUS
+      ---------------------------------------------------------------------- */}
+      {tab === 'supabase' && (
+        <form onSubmit={handleSaveSupabaseConfig} className="space-y-4 text-xs">
+          <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-gray-800">Connection Status:</span>
+              <span className={`px-2 py-0.5 rounded-full font-bold ${
+                isSupabaseConfigured
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}>
+                {isSupabaseConfigured ? '✓ Connected' : 'Waiting for Credentials'}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-500">
+              Mandi Mitra AI connects directly to your Supabase PostgreSQL database using the official client library.
+            </p>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">
+              NEXT_PUBLIC_SUPABASE_URL
+            </label>
+            <input
+              type="url"
+              required
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value)}
+              placeholder="https://xyzcompany.supabase.co"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-[11px]"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-1">
+              NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or Anon Key)
+            </label>
+            <input
+              type="password"
+              value={customKey}
+              onChange={(e) => setCustomKey(e.target.value)}
+              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-[11px]"
+            />
+            <span className="text-[10px] text-gray-400 block mt-1">
+              Found in your Supabase Dashboard: Project Settings &rarr; API &rarr; Project API keys (anon / publishable).
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2">
+            <Button type="submit" variant="primary" className="flex-1">
+              Save & Reconnect
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setRuntimeSupabaseConfig('', '');
+              }}
+            >
+              Reset
+            </Button>
+          </div>
         </form>
       )}
     </Modal>

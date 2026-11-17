@@ -29,9 +29,9 @@ export const ListProduceModule: React.FC<ListProduceModuleProps> = ({ onListingC
 
   const selectedCrop = crops.find((c) => c.id === selectedCropId) || crops[0];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addListing({
+    await addListing({
       farmerId: user?.id || 'farmer-ramesh-01',
       farmerName: user?.name || 'Rameshwar Patidar',
       farmerPhone: user?.phone || '+91 98261 44520',

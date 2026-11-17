@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const TransportComparisonModule: React.FC = () => {
-  const { transportOptions, mandis } = useMandiData();
+  const { transportOptions, mandis, bookTransport } = useMandiData();
 
   const [distanceKm, setDistanceKm] = useState(35);
   const [quantityQuintals, setQuantityQuintals] = useState(60);
@@ -193,7 +193,14 @@ export const TransportComparisonModule: React.FC = () => {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => {
+                  onClick={async () => {
+                    await bookTransport({
+                      providerId: selectedTransportForBooking.id,
+                      providerName: selectedTransportForBooking.providerName,
+                      vehicleType: selectedTransportForBooking.vehicleType,
+                      distanceKm,
+                      quantityQuintals,
+                    });
                     setBookingSuccess(true);
                     setTimeout(() => {
                       setBookingSuccess(false);

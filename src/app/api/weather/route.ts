@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
-import { WEATHER_ALERTS } from '@/lib/mockData';
+import { getAgroWeatherFeed } from '@/lib/weatherService';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json({
-    station: 'Indore Agro-Met Observatory (Central Plateau)',
-    updatedAt: new Date().toISOString(),
-    forecasts: WEATHER_ALERTS,
-  });
+  try {
+    const weatherResult = await getAgroWeatherFeed();
+    return NextResponse.json(weatherResult);
+  } catch (error) {
+    console.error('Weather API error:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to retrieve agro-met weather data',
+        isLiveWeather: false,
+        source: 'demonstration-agro-met',
+      },
+      { status: 500 }
+    );
+  }
 }

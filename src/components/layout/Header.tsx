@@ -6,9 +6,10 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useVoice } from '@/context/VoiceContext';
 import { LanguageSelector } from '@/components/common/LanguageSelector';
 import { NotificationDropdown } from './NotificationDropdown';
-import { Mic, MicOff, Sprout, Shield, User, Menu } from 'lucide-react';
+import { Mic, MicOff, Sprout, Shield, User, Menu, Database } from 'lucide-react';
 import { UserRole } from '@/lib/types';
 import { Badge } from '@/components/common/Badge';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -69,6 +70,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Center/Right: Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Supabase Connection Status Pill */}
+          <button
+            onClick={onOpenAuthModal}
+            className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all ${
+              isSupabaseConfigured
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
+            }`}
+            title="Supabase Database Connection Status"
+          >
+            <Database className={`w-3.5 h-3.5 ${isSupabaseConfigured ? 'text-emerald-700' : 'text-amber-600'}`} />
+            <span>{isSupabaseConfigured ? 'Supabase Live' : 'Connect DB'}</span>
+          </button>
+
           {/* Persona Role Switcher */}
           <div className="hidden md:flex items-center gap-1 bg-gray-50 border border-gray-200/80 rounded-xl p-1 text-xs">
             <span className="text-[11px] font-semibold text-gray-500 px-2 flex items-center gap-1">
@@ -104,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <Mic className="w-4 h-4 text-emerald-700" />
             )}
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline" suppressHydrationWarning>
               {isListening ? t('listening') : t('voiceAssistant')}
             </span>
           </button>
@@ -122,11 +137,11 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenAuthModal}
                 className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-gray-50 transition-colors text-left"
               >
-                <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 flex items-center justify-center font-bold text-xs" suppressHydrationWarning>
                   {user.name.charAt(0)}
                 </div>
                 <div className="hidden lg:block">
-                  <p className="text-xs font-bold text-gray-900 leading-tight truncate max-w-[120px]">
+                  <p className="text-xs font-bold text-gray-900 leading-tight truncate max-w-[120px]" suppressHydrationWarning>
                     {user.name.split(' ')[0]}
                   </p>
                   <Badge variant={roleColors[role].badge} size="sm">

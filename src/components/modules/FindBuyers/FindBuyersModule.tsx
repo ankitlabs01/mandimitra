@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useMandiData } from '@/context/MandiDataContext';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
@@ -18,10 +19,13 @@ import {
 } from 'lucide-react';
 
 export const FindBuyersModule: React.FC = () => {
+  const { createBuyerOffer, listings } = useMandiData();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedBuyerForContact, setSelectedBuyerForContact] = useState<any | null>(null);
   const [inquirySent, setInquirySent] = useState(false);
+  const [targetPrice, setTargetPrice] = useState(5150);
+  const [inquiryNotes, setInquiryNotes] = useState('Village Datoda, Indore. Lot is stored in dry covered bags. Computerized weighbridge accessible 1 km from farm.');
 
   const buyers = [
     {
@@ -101,8 +105,30 @@ export const FindBuyersModule: React.FC = () => {
     return true;
   });
 
-  const handleSendInquiry = (e: React.FormEvent) => {
+  const handleSendInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedBuyerForContact) {
+      const activeListing = listings[0];
+      await createBuyerOffer({
+        listingId: activeListing?.id || 'list-001',
+        cropName: activeListing?.cropName || 'Soybean (JS-9560)',
+        quantityQuintals: activeListing?.quantityQuintals || 85,
+        buyerId: selectedBuyerForContact.id,
+        buyerName: selectedBuyerForContact.contactPerson,
+        buyerBusinessName: selectedBuyerForContact.businessName,
+        buyerCategory: selectedBuyerForContact.category,
+        buyerRating: selectedBuyerForContact.rating,
+        buyerVerified: selectedBuyerForContact.verified,
+        offeredPricePerQuintal: targetPrice,
+        paymentTerms: 'same_day_rtgs',
+        transportProvidedByBuyer: selectedBuyerForContact.providesTransport,
+        transportAllowancePerQuintal: 0,
+        deliveryMandiOrLocation: selectedBuyerForContact.location,
+        distanceKm: selectedBuyerForContact.distanceKm,
+        notes: inquiryNotes,
+        validUntil: new Date(Date.now() + 4 * 86400000).toISOString(),
+      });
+    }
     setInquirySent(true);
     setTimeout(() => {
       setInquirySent(false);
@@ -266,7 +292,8 @@ export const FindBuyersModule: React.FC = () => {
                 <label className="block font-semibold text-gray-700 mb-1">Target Price (₹/quintal)</label>
                 <input
                   type="number"
-                  defaultValue="5150"
+                  value={targetPrice}
+                  onChange={(e) => setTargetPrice(Number(e.target.value) || 0)}
                   className="w-full py-2 px-3 border border-gray-300 rounded-xl text-xs font-bold"
                 />
               </div>
@@ -275,7 +302,8 @@ export const FindBuyersModule: React.FC = () => {
                 <label className="block font-semibold text-gray-700 mb-1">Message / Pickup Address</label>
                 <textarea
                   rows={3}
-                  defaultValue="Village Datoda, Indore. Lot is stored in dry covered bags. Computerized weighbridge accessible 1 km from farm."
+                  value={inquiryNotes}
+                  onChange={(e) => setInquiryNotes(e.target.value)}
                   className="w-full p-2.5 border border-gray-300 rounded-xl text-xs"
                 />
               </div>

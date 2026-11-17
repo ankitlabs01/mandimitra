@@ -34,9 +34,9 @@ export const SettingsProfileModule: React.FC = () => {
 
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({
+    await updateProfile({
       name,
       phone,
       village,
@@ -162,6 +162,7 @@ export const SettingsProfileModule: React.FC = () => {
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
                 className="w-full py-2.5 px-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-xl font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                suppressHydrationWarning
               >
                 {languages.map((l) => (
                   <option key={l.code} value={l.code}>

@@ -44,7 +44,7 @@ It empowers agricultural producers to mathematically optimize **WHEN**, **WHERE*
 - **Styling & UI:** Tailwind CSS, Lucide React Icons, Framer Motion
 - **Charting & Analytics:** Recharts (Area charts, Composed prediction bands)
 - **Database & Persistence:** PostgreSQL / Supabase with Row Level Security (RLS) policies (`supabase/schema.sql`, `supabase/seed.sql`) + local storage cache adapter
-- **AI & ML Integration:** Server-side API endpoints (`/api/ai/chat`, `/api/ai/predict`, `/api/ai/decision`), Gemini LLM connectivity + algorithmic fallback engine
+- **AI & ML Integration:** Server-side NVIDIA NIM / Nemotron Architecture (`src/lib/ai/nvidiaService.ts`), `/api/ai/chat`, `/api/ai/decision`, `/api/ai/predict`, with deterministic agricultural advisory fallback engine when API keys are absent.
 - **Voice System:** Web Speech API (SpeechRecognition + SpeechSynthesis)
 
 ---
@@ -54,23 +54,57 @@ It empowers agricultural producers to mathematically optimize **WHEN**, **WHERE*
 ### 1. Prerequisites
 - Node.js v18+ or v20+
 - npm v9+
+- A Supabase Project (cloud or self-hosted)
 
-### 2. Installation
+### 2. Environment Configuration
+Create a `.env.local` file (or duplicate `.env.example`):
+```env
+# Application Meta
+NEXT_PUBLIC_APP_NAME="Mandi Mitra AI"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Official Supabase Client Credentials
+NEXT_PUBLIC_SUPABASE_URL="https://your-project-id.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+
+# Server-Side Only Keys (Never expose to frontend)
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+
+# NVIDIA NIM / Nemotron AI (Leave blank during development; fallback active)
+NVIDIA_API_KEY=""
+NVIDIA_NIM_ENDPOINT="https://integrate.api.nvidia.com/v1"
+NVIDIA_MODEL="nvidia/llama-3.1-nemotron-70b-instruct"
+
+# Weather API Key (Optional; Open-Meteo & IMD fallback active)
+WEATHER_API_KEY=""
+```
+
+> **Note on In-App Setup:** You can also configure your Supabase URL & Key directly inside the running application by clicking the **"Supabase"** badge in the header or opening the Database tab in the User Profile modal.
+
+### 3. Database Setup (Supabase SQL Editor)
+Run the following SQL migration scripts located in the `/supabase` folder:
+1. **`supabase/schema.sql`**: Creates all relational tables (`profiles`, `crops`, `mandis`, `mandi_prices`, `produce_listings`, `buyer_offers`, `orders`, `disputes`, `storage_facilities`, `storage_reservations`, `transport_options`, `transport_bookings`, `weather_alerts`, `fpo_members_crops`), triggers (`on_auth_user_created`), and base Row Level Security (RLS) policies.
+2. **`supabase/seed.sql`**: Seeds reference data (Central India APMC mandis, commodities, historical prices, buyers, cold storages, transport options).
+3. **`supabase/migrations/001_enhanced_security_and_rls.sql`**: Applies hardened owner-level RLS policies and unique constraints to prevent duplicate entries.
+
+### 4. Installation
 ```bash
 npm install
 ```
 
-### 3. Running Development Server
+### 5. Running Development Server
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### 4. Production Build
+### 6. Production Build & Deployment
 ```bash
 npm run build
 npm start
 ```
+The application is preconfigured for zero-config deployment on **Vercel**. Simply import the GitHub repository and supply `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the Vercel Project Settings under Environment Variables.
 
 ---
 

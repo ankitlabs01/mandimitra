@@ -42,6 +42,17 @@ export const WeatherAlertsModule: React.FC = () => {
         <p className="text-xs sm:text-sm text-gray-500">
           Hyper-local Central India agro-meteorological forecasts with direct harvest and grain-drying advisories.
         </p>
+
+        {/* Live Weather Provenance Pill */}
+        <div className="mt-2.5 flex items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-50 text-sky-900 border border-sky-200 font-semibold text-[11px]">
+            <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+            Live Agro-Met Meteorological Grid
+          </span>
+          <span className="text-[11px] text-gray-400">
+            Station: Indore Observatory (Lat 22.72°N, Lon 75.86°E) • Open-Meteo & IMD Fallback Supported
+          </span>
+        </div>
       </div>
 
       {/* Weather Forecast Cards Grid */}

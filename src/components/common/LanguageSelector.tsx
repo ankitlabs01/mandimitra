@@ -22,6 +22,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = fa
           compact ? 'py-1 pl-7 pr-6 text-xs' : ''
         }`}
         aria-label="Select language"
+        suppressHydrationWarning
       >
         {languages.map((l) => (
           <option key={l.code} value={l.code}>

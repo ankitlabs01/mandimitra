@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const StorageSpoilageModule: React.FC = () => {
-  const { storageFacilities, crops } = useMandiData();
+  const { storageFacilities, crops, reserveStorage } = useMandiData();
 
   const [selectedCropId, setSelectedCropId] = useState('crop-soybean');
   const [holdingDays, setHoldingDays] = useState(45);
@@ -212,7 +212,20 @@ export const StorageSpoilageModule: React.FC = () => {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => {
+                  onClick={async () => {
+                    const totalRent = Math.round(
+                      quantityQuintals *
+                        selectedFacilityForBooking.ratePerQuintalPerMonth *
+                        (holdingDays / 30)
+                    );
+                    await reserveStorage({
+                      facilityId: selectedFacilityForBooking.id,
+                      facilityName: selectedFacilityForBooking.name,
+                      cropName: selectedCrop.name,
+                      quantityQuintals,
+                      holdingDays,
+                      rent: totalRent,
+                    });
                     setBookingConfirmed(true);
                     setTimeout(() => {
                       setBookingConfirmed(false);
